@@ -26,6 +26,8 @@ Each rule has a mechanism in the engine; keep both.
 ## Sound
 12. **One narrator, calm.** Only calm tags ([softly] [warmly] [curious] [serious] [thoughtfully] [pause]); dramatic tags make TTS shout.
     The picker drops takes that rise far above the voice's normal pitch (shouting guard). Avoid [curious] if your narrator tends to rise on it.
+    Optional test: `"narration_energy": "hook_reveal"` in script.json allows livelier tags ([excited] [dramatically] [intense]) on the hook
+    and shots marked `"reveal": true` only (guard still on). Compare views at 48 h against calm reels of similar fame before adopting it.
 13. **Never chop a voice.** Lines end with their natural tail and a fade; verse and quote lines are never ASR-cut (ASR can't spell scripture);
     the verse keeps its own pauses. If a word is cut, fix the engine, not just the reel.
 14. **Music may sit high** when it serves the reel (`score.gain`, `score.duck`); one take per reel chosen by its energy curve vs. the story beats.
