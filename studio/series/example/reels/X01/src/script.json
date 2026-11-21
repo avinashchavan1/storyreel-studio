@@ -1,0 +1,148 @@
+{
+ "reel": "X01",
+ "title": "Demo: the engine end to end",
+ "series": "example",
+ "fps": 24,
+ "status": "DEMO — the template's sample reel; not for posting",
+ "source": "Example Source Text, Book 1 (Public-domain edition)",
+ "source_card": {
+  "title": [
+   "EXAMPLE",
+   "SOURCE"
+  ],
+  "sub": "BOOK 1  ·  CHAPTER 1",
+  "edition": "EXAMPLE EDITION"
+ },
+ "avoid": [
+  "posting this demo"
+ ],
+ "verify_note": "Demo only: no factual claim is made; replace with a real reel.",
+ "claims": [
+  {
+   "claim": "Demo placeholder: this reel makes no factual claim",
+   "ref": "—",
+   "verified": true,
+   "sources": [
+    "n/a"
+   ]
+  }
+ ],
+ "caption": "Demo reel of the template.",
+ "youtube_title": "Demo | Example Source Text #Shorts",
+ "comment_prompt": "",
+ "hashtags": [
+  "#ExampleChannel"
+ ],
+ "thumbnail": {
+  "frame": "2s",
+  "hook": "Is the story we know the real one?",
+  "stamp": "Demo",
+  "line": "The engine, end to end.",
+  "badge": "Example Source · Book 1",
+  "art_shift": 0
+ },
+ "score": {
+  "engine": "elevenlabs music_v1",
+  "file": "audio/score.mp3",
+  "duration_s": 40,
+  "gain": 1.9,
+  "duck": 0.72,
+  "prompt": "Gentle Indian storytelling underscore, instrumental only, built to sit under a spoken voice: tanpura drone, soft bansuri, light tabla, a small swell near the end. No vocals."
+ },
+ "shots": [
+  {
+   "id": 1,
+   "voice": "narrator",
+   "hi": "क्या जो कहानी हमने सुनी, वही असली है?",
+   "en": "Is the story we heard the real one?",
+   "units": [
+    "[thoughtfully] क्या जो कहानी हमने सुनी… वही असली है?"
+   ],
+   "card": [
+    [
+     "THE STORY",
+     null
+    ],
+    [
+     "WE KNOW?",
+     "#f6c244"
+    ]
+   ],
+   "lead": 0.28,
+   "tail": 0.6,
+   "min": 2.8
+  },
+  {
+   "id": 2,
+   "voice": "narrator",
+   "hi": "उदाहरण ग्रंथ, पहला अध्याय। यह एक उदाहरण श्लोक है। यहाँ मूल ग्रंथ का श्लोक आएगा। ये है असली कहानी।",
+   "en": "",
+   "units": [
+    "उदाहरण ग्रंथ, पहला अध्याय।",
+    "[reverently] [slowly] यह एक उदाहरण श्लोक है… यहाँ मूल ग्रंथ का श्लोक आएगा॥",
+    "[serious] ये है असली कहानी।"
+   ],
+   "unit_gap": 0.5,
+   "lead": 0.18,
+   "tail": 0.12,
+   "sloka_unit": 1,
+   "sloka": {
+    "lines": [
+     "यह एक उदाहरण श्लोक है ।",
+     "यहाँ मूल ग्रंथ का श्लोक आएगा ॥"
+    ],
+    "ref": "BOOK 1.1.1 (EXAMPLE)",
+    "en": "“This is an example verse. The base text's verse goes here, copied from the source page.”"
+   }
+  },
+  {
+   "id": 3,
+   "voice": "narrator",
+   "hi": "राजा के दरबार में, एक ऋषि आते हैं।",
+   "en": "A sage comes to the king's court.",
+   "units": [
+    "[warmly] राजा के दरबार में… एक ऋषि आते हैं।"
+   ],
+   "cite": "1.1.1",
+   "lead": 0.25,
+   "tail": 0.4
+  },
+  {
+   "id": 4,
+   "voice": "narrator",
+   "hi": "लोकप्रिय कथा कहती है: यह लोकप्रिय कथा की पंक्ति है। यहाँ उसका सही उद्धरण आएगा।",
+   "en": "",
+   "units": [
+    "[warmly] लोकप्रिय कथा कहती है:",
+    "[softly] यह लोकप्रिय कथा की पंक्ति है… यहाँ उसका सही उद्धरण आएगा।"
+   ],
+   "unit_gap": 0.45,
+   "cite": "Example retelling, 1",
+   "lead": 0.25,
+   "tail": 0.4,
+   "quote": {
+    "source": "A LATER RETELLING",
+    "ref": "EXAMPLE · CHAPTER 1",
+    "lines": [
+     "यह लोकप्रिय कथा की पंक्ति है।",
+     "यहाँ उसका सही उद्धरण आएगा॥"
+    ],
+    "translit": "yah lokapriya kathā kī paṅkti hai, yahāṃ uskā sahī uddharaṇ āegā",
+    "en": "“This is the popular version's line; its exact words go here.”"
+   }
+  },
+  {
+   "id": 5,
+   "voice": "narrator",
+   "hi": "ऐसी और कहानियों के लिए, फ़ॉलो करें।",
+   "en": "",
+   "units": [
+    "[warmly] ऐसी और कहानियों के लिए, फ़ॉलो करें।"
+   ],
+   "lead": 0.43,
+   "tail": 0.68,
+   "min": 3.7,
+   "cta": true
+  }
+ ]
+}

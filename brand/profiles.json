@@ -1,0 +1,22 @@
+{
+ "instagram": {
+  "username": "examplechannel",
+  "name": "Example Channel | Stories",
+  "category": "Digital creator",
+  "bio": "Stories from the original texts\nEvery reel shows its verse\nNarration · English subtitles",
+  "link": "https://www.youtube.com/@examplechannel",
+  "link_title": "YouTube",
+  "settings": [
+   "Account type: Professional → Creator; turn on “Display category label”."
+  ]
+ },
+ "youtube": {
+  "handle": "@examplechannel",
+  "name": "Example Channel",
+  "description": "Short stories from the original texts, with the verse on screen.",
+  "keywords": [
+   "stories",
+   "mythology"
+  ]
+ }
+}

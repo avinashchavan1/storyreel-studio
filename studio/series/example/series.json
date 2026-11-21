@@ -1,0 +1,128 @@
+{
+ "id": "example",
+ "logo": "EXAMPLE CHANNEL",
+ "title": [
+  "EXAMPLE",
+  "CHANNEL"
+ ],
+ "tagline": "Stories from the original texts.",
+ "series_name": "EXAMPLE SERIES",
+ "source_title": "Example Source Text",
+ "cta_hi": "ऐसी और कहानियों के लिए, फ़ॉलो करें।",
+ "source": {
+  "book": "Example Source Text",
+  "edition": "Public-domain edition",
+  "cite_format": "Book.Chapter.Verse, e.g. 1.2.3",
+  "check_against": [
+   "the source site in channel.json → source.verse_url"
+  ]
+ },
+ "language": {
+  "narration": "Hindi (Devanagari); everything written is English",
+  "screen_text": "English",
+  "thumbnails": "English",
+  "captions_titles": "English"
+ },
+ "palette": {
+  "gold": "#f6c244",
+  "ivory": "#fbf3df",
+  "red": "#c81e1e",
+  "ink": "#07061a"
+ },
+ "fonts": {
+  "title": "Cinzel",
+  "body": "Montserrat"
+ },
+ "loudness_lufs": -14,
+ "major_characters": {
+  "rule": "The owner picks look AND voice for major, recurring characters (show stills/audio options first). Minor characters: Claude picks, then says which.",
+  "locked": [
+   "narrator"
+  ],
+  "ask_user_when_first_needed": [
+   "hero",
+   "heroine"
+  ],
+  "minor_examples": [
+   "villager",
+   "hunter"
+  ]
+ },
+ "character_looks": {},
+ "address": {
+  "rule": "Name a revered figure respectfully: devotees and family don't use the bare name; elders, sages and adversaries may.",
+  "protected_names": [],
+  "honorific_prefixes": [
+   "श्री"
+  ],
+  "plain_name_ok": [
+   "narrator"
+  ],
+  "forms": {
+   "default": "an honorific"
+  }
+ },
+ "cast_meta": {
+  "names": {
+   "narrator": "Narrator"
+  },
+  "first_reel": {},
+  "rig_keys": {},
+  "rig_to_character": {},
+  "draw_functions": {},
+  "notes": {},
+  "major_extra": []
+ },
+ "locations": [
+  {
+   "key": "hermitage",
+   "name": "Forest hermitage by a river",
+   "builder": "buildHermitage(tod)",
+   "description": "Hut, tree, river band, moon."
+  },
+  {
+   "key": "court",
+   "name": "Royal court by day",
+   "builder": "buildCourt()",
+   "description": "Sandstone arches, festoons."
+  },
+  {
+   "key": "manuscript",
+   "name": "Palm-leaf manuscript",
+   "builder": "buildManuscript()",
+   "description": "Source, verse and quote cards."
+  }
+ ],
+ "plan_file": "PLAN.md",
+ "channel": {
+  "name": "Example Channel",
+  "instagram": "@examplechannel",
+  "youtube": "@examplechannel"
+ },
+ "handles_line": [
+  "INSTAGRAM  @examplechannel",
+  "YOUTUBE  @examplechannel"
+ ],
+ "cta": {
+  "instagram": {
+   "button": "FOLLOW",
+   "say": "ऐसी और कहानियों के लिए, फ़ॉलो करें।",
+   "handles_line": [
+    "INSTAGRAM  @examplechannel",
+    "YOUTUBE  @examplechannel"
+   ]
+  },
+  "youtube": {
+   "button": "SUBSCRIBE",
+   "say": "ऐसी और कहानियों के लिए, सब्सक्राइब करें।",
+   "handles_line": [
+    "YOUTUBE  @examplechannel",
+    "INSTAGRAM  @examplechannel"
+   ]
+  }
+ },
+ "manuscript_lines": [
+  "॥ श्रीः ॥",
+  "॥ इति कथा ॥"
+ ]
+}

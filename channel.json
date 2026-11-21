@@ -1,0 +1,65 @@
+{
+ "_doc": "One channel per copy of this template. Every script, the engine and the app read this file. setup.sh fills it in.",
+ "id": "example",
+ "name": "Example Channel",
+ "app_title": "Storyreel Studio",
+ "app_url": "https://studio.example.com",
+ "series": {
+  "id": "example",
+  "name": "Example Series",
+  "book": "Example Source Text",
+  "edition": "Public-domain edition"
+ },
+ "handles": {
+  "instagram": {
+   "handle": "@examplechannel",
+   "url": "https://www.instagram.com/examplechannel/"
+  },
+  "youtube": {
+   "handle": "@examplechannel",
+   "url": "https://www.youtube.com/@examplechannel"
+  }
+ },
+ "language": {
+  "narration": "hi",
+  "screen": "en"
+ },
+ "hashtags": [
+  "#ExampleChannel",
+  "#Stories",
+  "#Mythology"
+ ],
+ "source": {
+  "title": "Example Source Text",
+  "edition": "Public-domain edition",
+  "citation": "book.chapter.verse",
+  "verse_url": "https://example.org/book-{book}/chapter-{chapter}/",
+  "_verse_url_doc": "Page holding the original-script verse + translation for a chapter; scripts/source_verse.py fetches it (never quote from memory)."
+ },
+ "captions": {
+  "instagram_follow": "Follow {instagram} for more stories from the original texts.",
+  "youtube_subscribe": "Subscribe to {name} for real stories from the original texts.",
+  "youtube_title_suffix": "{book} #Shorts"
+ },
+ "infra": {
+  "supabase_ref": "YOUR-PROJECT-REF",
+  "supabase_url": "https://YOUR-PROJECT-REF.supabase.co",
+  "hf_masters_repo": "your-hf-user/example-masters",
+  "netlify_site_id": "YOUR-NETLIFY-SITE-ID",
+  "supabase_publishable_key": "sb_publishable_YOUR_KEY",
+  "github_repo": "your-github-user/your-channel-studio"
+ },
+ "owner": {
+  "contact_email": "you@example.com",
+  "_doc": "Shown on the app's privacy/terms pages and seeded as the first app admin."
+ },
+ "brand": {
+  "tagline": "Stories from the original texts",
+  "palette": {
+   "gold": "#f6c244",
+   "ivory": "#fbf3df",
+   "red": "#c81e1e",
+   "ink": "#07061a"
+  }
+ }
+}

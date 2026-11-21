@@ -1,0 +1,27 @@
+{
+ "_doc": "The channel's posting calendar: occasions (festivals, anniversaries), theme words that tag reels (regex, case-insensitive, matched on title + plan note + hashtags), and weekly days that suit a theme. Copy a preset from presets/ or write your own.",
+ "timezone_offset_min": 330,
+ "occasions": [
+  {
+   "date": "2027-01-01",
+   "name": "New Year",
+   "what": "A big viewing day",
+   "themes": [
+    "any"
+   ],
+   "weight": 2,
+   "devotional": true
+  }
+ ],
+ "themes": [
+  [
+   "wedding",
+   "wedding|marri"
+  ],
+  [
+   "hero",
+   "\\bhero\\b"
+  ]
+ ],
+ "weekly": []
+}
