@@ -35,6 +35,10 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - `scripts/`: sync.py (studio → app DB), media.py, masters.py (HF masters repo), audiopack.py, cast_media.py, status.py, publish_job.py,
   source_verse.py, setup.sh (new channel), channel.py (loads channel.json).
 
+## Full-length videos
+- Full-length videos (16:9, ~10–12 min) are NEW productions, never stitched from old reels; 4–6 reels are DERIVED from each
+  (self-contained beats, one drawing for both frames). Rules 22–28 in `PLAYBOOK.md`; the channel's plan and pilot go in `studio/series/<id>/LONGFORM.md`.
+
 ## Sessions
 - Up to 3 reels per session (4 when they share sets/characters). Start a new session when it gets long; nothing is lost.
 
