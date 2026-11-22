@@ -22,6 +22,7 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - Endings: FOLLOW on Instagram/Facebook, SUBSCRIBE on YouTube.
 - Never post or publish yourself; the owner posts from the app.
 - Secrets: never ask for keys in chat; they are network secrets on the cloud environment; code uses the placeholder `proxy-injected`.
+- Keep everything updated in git: commit AND push after every meaningful step, never leave untracked or unpushed work; shared changes go to the template right away.
 - No model IDs in commits or code. Keep the owner updated (chat + `python3 scripts/status.py set --reel <ID> --step N`).
 
 ## Layout
@@ -34,6 +35,10 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - `supabase/`: migrations + edge functions (studio, job, oauth); function secrets: APP_URL, GITHUB_REPO, HF_MASTERS_REPO, IG_HANDLE.
 - `scripts/`: sync.py (studio → app DB), media.py, masters.py (HF masters repo), audiopack.py, cast_media.py, status.py, publish_job.py,
   source_verse.py, setup.sh (new channel), channel.py (loads channel.json).
+
+## Full-length videos
+- Full-length videos (16:9, ~10–12 min) are NEW productions, never stitched from old reels; 4–6 reels are DERIVED from each
+  (self-contained beats, one drawing for both frames). Rules 22–28 in `PLAYBOOK.md`; the channel's plan and pilot go in `studio/series/<id>/LONGFORM.md`.
 
 ## Sessions
 - Up to 3 reels per session (4 when they share sets/characters). Start a new session when it gets long; nothing is lost.
