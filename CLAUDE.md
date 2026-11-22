@@ -23,6 +23,7 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - Never post or publish yourself; the owner posts from the app.
 - Secrets: never ask for keys in chat; they are network secrets on the cloud environment; code uses the placeholder `proxy-injected`.
 - Keep everything updated in git: commit AND push after every meaningful step, never leave untracked or unpushed work; shared changes go to the template right away.
+- Merging: when the owner allows it (see the channel's CLAUDE.md), Claude opens a PR from its session branch, checks it is clean/green, merges it to `main`, and reports what was merged.
 - No model IDs in commits or code. Keep the owner updated (chat + `python3 scripts/status.py set --reel <ID> --step N`).
 
 ## Layout
