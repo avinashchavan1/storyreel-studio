@@ -22,6 +22,7 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - Endings: FOLLOW on Instagram/Facebook, SUBSCRIBE on YouTube.
 - Never post or publish yourself; the owner posts from the app.
 - Secrets: never ask for keys in chat; they are network secrets on the cloud environment; code uses the placeholder `proxy-injected`.
+- Keep everything updated in git: commit AND push after every meaningful step, never leave untracked or unpushed work; shared changes go to the template right away.
 - No model IDs in commits or code. Keep the owner updated (chat + `python3 scripts/status.py set --reel <ID> --step N`).
 
 ## Layout
