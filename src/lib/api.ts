@@ -8,7 +8,7 @@ async function must<T>(p: PromiseLike<{ data: unknown; error: { message: string 
   return data as T;
 }
 
-const REEL_LIST = "id,series_id,code,plan_no,title,kind,stage,source_ref,art_cost,plan_note,hook_hi,hook_en,length_s,reviewed,reviewed_at,updated_at,created_at,hashtags,captions,verify_note,notes,follows:script->>follows,category:script->>category,requested_at,request_pos,request_note,requested_by";
+const REEL_LIST = "id,series_id,code,plan_no,title,kind,stage,source_ref,art_cost,plan_note,hook_hi,hook_en,length_s,reviewed,reviewed_at,updated_at,created_at,hashtags,captions,verify_note,notes,follows:script->>follows,category:script->>category,hook_score:script->hook_options->0->>score,requested_at,request_pos,request_note,requested_by";
 
 // the pipeline: every reel except dropped / merged ones
 export const useReels = () =>
@@ -148,8 +148,10 @@ export interface ProviderStatus { connected: boolean; at: string | null; name: s
 export interface Connections { providers: Record<string, ProviderStatus | undefined>; redirect_uris: { youtube: string; instagram: string }; }
 export interface StatDay { reel_id: string; platform: string; day: string; stats: Record<string, number | null> }
 export interface FollowerDay { platform: string; day: string; followers: number | null; extra: Record<string, number | null> }
-export const useStatsDaily = () => useQuery({ queryKey: ["stats_daily"], queryFn: () => must<StatDay[]>(supabase.from("stats_daily").select("*").order("day")) });
-export const useFollowers = () => useQuery({ queryKey: ["follower_daily"], queryFn: () => must<FollowerDay[]>(supabase.from("follower_daily").select("*").order("day")) });
+export interface StatLog { reel_id: string; platform: string; at: string; views: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null; reach: number | null }
+export const useStatsLog = () => useQuery({ queryKey: ["stats_log"], refetchInterval: 60e3, queryFn: () => must<StatLog[]>(supabase.from("stats_log").select("*").order("at").limit(5000)) });
+export const useStatsDaily = () => useQuery({ queryKey: ["stats_daily"], refetchInterval: 60e3, queryFn: () => must<StatDay[]>(supabase.from("stats_daily").select("*").order("day")) });
+export const useFollowers = () => useQuery({ queryKey: ["follower_daily"], refetchInterval: 60e3, queryFn: () => must<FollowerDay[]>(supabase.from("follower_daily").select("*").order("day")) });
 export const useConnections = () => useQuery({ queryKey: ["connections"], queryFn: () => studio<Connections>("status") });
 
 export interface PublishJob { id: string; reel_id: string; platform: string; status: "queued" | "running" | "done" | "failed"; step: string | null; log: string; result_url: string | null; created_at: string; finished_at: string | null; }

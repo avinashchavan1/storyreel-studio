@@ -29,7 +29,7 @@ export interface Reel {
   length_s: number | null; script: Script | null; captions: Record<string, string>; hashtags: string[]; verify_note: string | null;
   reviewed: boolean; reviewed_at: string | null; notes: string | null; created_at: string; updated_at: string;
   follows?: string | null;   // script.json "follows": post the day after this reel
-  category?: string | null; claim_checks?: Record<string, string>; hook_choice?: Record<string, unknown> | null;
+  category?: string | null; hook_score?: string | number | null; claim_checks?: Record<string, string>; hook_choice?: Record<string, unknown> | null;
   requested_at?: string | null; request_pos?: number | null; request_note?: string | null; requested_by?: string | null;
 }
 export interface Claim { id: string; reel_id: string; position: number; claim: string; ref: string; quote_sa: string | null; verified: boolean; sources: string[]; }
