@@ -182,6 +182,10 @@ def watch_queue(codes, studio):
     info = load_info(); started = now(); t0 = time.time(); hist = {}
     info["events"] = info.get("events", [])
     while True:
+        # re-read the shared parts every loop: other commands (batch, done, set) change them while this watcher runs,
+        # and writing back a stale copy brought back old, finished batches
+        fresh = load_info()
+        for k in ("batch", "reels", "batch_pct", "events"): info[k] = fresh.get(k, info.get(k))
         queue, total_left, cur = [], 0.0, None
         for c in codes:
             key, frac, det = phase_of(studio, c); secs = secs_of(studio, c)
