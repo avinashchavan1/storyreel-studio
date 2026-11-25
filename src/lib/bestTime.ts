@@ -4,6 +4,9 @@
 // with our own data weighted more as more posts come in (w = n / (n + 6)).
 import type { Publication, Reel } from "./types";
 import { fit, pullOf } from "./occasions";
+import calCfg from "../../calendar.json";
+// posting weekdays (0 = Sun … 6 = Sat), calendar.json → post_days; default every day
+export const POST_DAYS: number[] = (calCfg as { post_days?: number[] }).post_days ?? [0, 1, 2, 3, 4, 5, 6];
 
 export type Main = "instagram" | "youtube";
 const TZ = "Asia/Kolkata";
@@ -77,7 +80,7 @@ export interface Slot { reel: Reel; day: number; fixed?: Date; why: string[] }
 export function planDays(queue: Reel[], firstDay: number, fixedFor: (r: Reel) => Date | null): Slot[] {
   const fixed: Slot[] = [], left: Reel[] = [], taken = new Set<number>();
   for (const r of queue) { const f = fixedFor(r); if (f) { const d = istParts(f).day; fixed.push({ reel: r, day: d, fixed: f, why: ["Scheduled"] }); taken.add(d); } else left.push(r); }
-  const days: number[] = []; for (let d = firstDay; days.length < left.length; d++) if (!taken.has(d)) days.push(d);
+  const days: number[] = []; for (let d = firstDay; days.length < left.length; d++) if (!taken.has(d) && POST_DAYS.includes((d + 4) % 7)) days.push(d);   // calendar.json → post_days
   const order = (r: Reel) => queue.indexOf(r), n = left.length;
   // total value of posting left[perm[k]] on days[k]: festival/weekly-day fit, strong reels a little earlier, small cost for leaving plan order;
   // a reel with "follows" must sit the day right after its pair (when both are in the queue)
@@ -85,7 +88,7 @@ export function planDays(queue: Reel[], firstDay: number, fixedFor: (r: Reel) =>
     let v = 0; const at: Record<string, number> = {};
     perm.forEach((ri, k) => { at[left[ri].code] = days[k]; });
     for (let k = 0; k < n; k++) { const r = left[perm[k]];
-      if (r.follows && at[r.follows] !== undefined && at[r.follows] !== days[k] - 1) return -1e9;
+      if (r.follows && at[r.follows] !== undefined && days.indexOf(at[r.follows]) !== k - 1) return -1e9;   // paired reels on consecutive posting days
       const wk = [0, 6].includes((days[k] + 4) % 7) ? 0.45 * pullOf(r) : 0;   // weekends: the biggest audience, give it the strongest reels
       v += fit(r, days[k]).s + wk + 0.25 * pullOf(r) * (n - k) / n - 0.15 * Math.abs(k - order(r)); }
     return v;
