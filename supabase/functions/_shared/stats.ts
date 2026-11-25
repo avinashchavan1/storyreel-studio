@@ -4,27 +4,55 @@ import { admin, facebookPage, FB_GRAPH, getIntegration, instagramToken, youtubeA
 const YT = "https://www.googleapis.com/youtube/v3";
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** Views / likes / comments (+ Instagram reach, saves, shares) for every posted reel, and follower counts.
- *  Writes publications.stats (latest) and stats_daily / follower_daily (one row per day, for trends). */
-export async function refreshStats() {
-  const { data: pubs } = await admin.from("publications").select("id,reel_id,platform,external_id").eq("state", "posted").not("external_id", "is", null);
+/** How often a post is re-read (keeps API use small and far from Meta's and YouTube's limits, which posting shares):
+ *  first 48 h after posting: hourly · up to 7 days: every 6 h · older: daily. */
+export function isDue(postedAt: string | null, statsAt: string | null, now = Date.now()) {
+  if (!statsAt) return true;
+  const age = now - new Date(postedAt ?? statsAt).getTime(), since = now - new Date(statsAt).getTime(), H = 3600e3;
+  return since >= (age < 48 * H ? 0.9 * H : age < 7 * 24 * H ? 5.9 * H : 23.5 * H);
+}
+
+/** Views / likes / comments (+ reach, saves, shares) for posted reels, and follower counts.
+ *  onlyDue: just the posts whose turn it is (the hourly timer); otherwise all (Refresh now, max once per 10 min).
+ *  Writes publications.stats (latest), stats_daily (one row per day) and stats_log (every reading). */
+export async function refreshStats(onlyDue = false) {
+  const { data: all } = await admin.from("publications").select("id,reel_id,platform,external_id,posted_at,stats_at").eq("state", "posted").not("external_id", "is", null);
+  const pubs = (all ?? []).filter((p) => !onlyDue || isDue(p.posted_at, p.stats_at));
   const out: Record<string, unknown>[] = [];
-  let ytTok: string | null = null, ig: { token: string; api_base: string } | null = null, fb: { token: string; page_id: string } | null = null;
-  for (const p of pubs ?? []) {
+  const save = async (p: { id: string; reel_id: string; platform: string }, stats: Record<string, unknown>) => {
+    const num = (k: string) => (typeof stats[k] === "number" ? stats[k] as number : null);
+    await admin.from("publications").update({ stats, stats_at: new Date().toISOString() }).eq("id", p.id);
+    await admin.from("stats_daily").upsert({ reel_id: p.reel_id, platform: p.platform, day: today(), stats }, { onConflict: "reel_id,platform,day" });
+    await admin.from("stats_log").insert({ reel_id: p.reel_id, platform: p.platform, views: num("views"), likes: num("likes"), comments: num("comments"), shares: num("shares"), saves: num("saved"), reach: num("reach") });
+    out.push({ id: p.id, platform: p.platform, ...stats });
+  };
+  // YouTube: up to 50 videos per call (1 quota unit each call, 10,000 a day)
+  const yts = pubs.filter((p) => p.platform === "youtube");
+  if (yts.length) {
     try {
-      let stats: Record<string, unknown> = {};
-      if (p.platform === "youtube") {
-        ytTok ??= await youtubeAccessToken();
-        const it = (await (await fetch(`${YT}/videos?part=statistics,status,contentDetails&id=${p.external_id}`, { headers: { Authorization: `Bearer ${ytTok}` } })).json()).items?.[0] ?? {};
-        const v = it.statistics ?? {}, st = it.status ?? {};
-        stats = { views: +v.viewCount || 0, likes: +v.likeCount || 0, comments: +v.commentCount || 0,
-          status: { privacy: st.privacyStatus, upload: st.uploadStatus, made_for_kids: st.madeForKids, self_declared_kids: st.selfDeclaredMadeForKids,
-            age_restricted: it.contentDetails?.contentRating?.ytRating === "ytAgeRestricted", rejection: st.rejectionReason ?? null, license: st.license } };
-      } else if (p.platform === "instagram") {
+      const tok = await youtubeAccessToken();
+      for (let i = 0; i < yts.length; i += 50) {
+        const chunk = yts.slice(i, i + 50);
+        const items = (await (await fetch(`${YT}/videos?part=statistics,status,contentDetails&id=${chunk.map((p) => p.external_id).join(",")}`, { headers: { Authorization: `Bearer ${tok}` } })).json()).items ?? [];
+        for (const p of chunk) {
+          const it = items.find((x: any) => x.id === p.external_id) ?? {}; const v = it.statistics ?? {}, st = it.status ?? {};
+          await save(p, { views: +v.viewCount || 0, likes: +v.likeCount || 0, comments: +v.commentCount || 0,
+            status: { privacy: st.privacyStatus, upload: st.uploadStatus, made_for_kids: st.madeForKids, self_declared_kids: st.selfDeclaredMadeForKids,
+              age_restricted: it.contentDetails?.contentRating?.ytRating === "ytAgeRestricted", rejection: st.rejectionReason ?? null, license: st.license } });
+        }
+      }
+    } catch (e) { out.push({ platform: "youtube", error: e instanceof Error ? e.message : String(e) }); }
+  }
+  let ig: { token: string; api_base: string } | null = null, fb: { token: string; page_id: string } | null = null;
+  const fbI = await getIntegration("facebook");
+  for (const p of pubs.filter((x) => x.platform !== "youtube")) {
+    try {
+      const stats: Record<string, unknown> = {};
+      if (p.platform === "instagram") {
         if (!ig) { const t = await instagramToken(); ig = { token: t.token, api_base: t.api_base }; }
         const q = (path: string) => fetch(`${ig!.api_base}/${path}${path.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(ig!.token)}`).then((r) => r.json());
         const m = await q(`${p.external_id}?fields=like_count,comments_count`);
-        stats = { likes: m.like_count ?? null, comments: m.comments_count ?? null };
+        stats.likes = m.like_count ?? null; stats.comments = m.comments_count ?? null;
         const ins = await q(`${p.external_id}/insights?metric=views,reach,saved,shares`);
         for (const d of ins.data ?? []) stats[d.name] = d.values?.[0]?.value ?? d.total_value?.value ?? null;
         if (ins.error) stats.insights_error = String(ins.error.message ?? ins.error).slice(0, 200);
@@ -32,25 +60,26 @@ export async function refreshStats() {
         if (!fb) { const pg = await facebookPage(); fb = { token: pg.token, page_id: pg.page_id }; }
         const q = (path: string) => fetch(`${FB_GRAPH}/${path}${path.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(fb!.token)}`).then((r) => r.json());
         const v = await q(`${p.external_id}?fields=likes.summary(true).limit(0),comments.summary(true).limit(0)`);
-        stats = { likes: v.likes?.summary?.total_count ?? null, comments: v.comments?.summary?.total_count ?? null };
-        // Meta names Reels plays differently across API versions: try each, keep the first that answers
-        for (const m of ["fb_reels_total_plays", "blue_reels_play_count", "total_video_views", "post_video_views"]) {
+        if (v.error) throw new Error(v.error.message);
+        stats.likes = v.likes?.summary?.total_count ?? null; stats.comments = v.comments?.summary?.total_count ?? null;
+        // Meta names Reels plays differently across API versions: remember the one that works, try the others only if it stops
+        const known = fbI?.views_metric as string | undefined;
+        for (const m of [...(known ? [known] : []), ...["fb_reels_total_plays", "blue_reels_play_count", "total_video_views", "post_video_views"].filter((x) => x !== known)]) {
           const ins = await q(`${p.external_id}/video_insights?metric=${m}`);
           const val = ins.data?.[0]?.values?.[0]?.value;
-          if (val != null) { stats.views = typeof val === "number" ? val : Number(val) || 0; delete stats.insights_error; break; }
+          if (val != null) { stats.views = typeof val === "number" ? val : Number(val) || 0; if (m !== known && fbI) { fbI.views_metric = m; await admin.from("integrations").update({ data: fbI }).eq("provider", "facebook"); } break; }
           if (ins.error) stats.insights_error = String(ins.error.message ?? ins.error).slice(0, 200);
         }
-        const reach = await q(`${p.external_id}/video_insights?metric=post_impressions_unique`);
-        if (reach.data?.[0]?.values?.[0]?.value != null) stats.reach = reach.data[0].values[0].value;
-        if (v.error) throw new Error(v.error.message);
+        if (stats.views != null) delete stats.insights_error;
       } else continue;
-      await admin.from("publications").update({ stats, stats_at: new Date().toISOString() }).eq("id", p.id);
-      await admin.from("stats_daily").upsert({ reel_id: p.reel_id, platform: p.platform, day: today(), stats }, { onConflict: "reel_id,platform,day" });
-      out.push({ id: p.id, platform: p.platform, ...stats });
+      await save(p, stats);
     } catch (e) { out.push({ id: p.id, platform: p.platform, error: e instanceof Error ? e.message : String(e) }); }
   }
-  const followers = await refreshFollowers();
-  return { updated: out, followers };
+  // follower counts: 3 calls, once an hour at most
+  const { data: ch } = await admin.from("channels").select("stats_refreshed_at").eq("platform", "youtube").maybeSingle();
+  const followers = !onlyDue || !ch?.stats_refreshed_at || Date.now() - new Date(ch.stats_refreshed_at).getTime() > 55 * 60e3 ? await refreshFollowers() : null;
+  if (followers) await admin.from("channels").update({ stats_refreshed_at: new Date().toISOString() }).eq("platform", "youtube");
+  return { checked: pubs.length, of: (all ?? []).length, updated: out, followers };
 }
 
 async function refreshFollowers() {

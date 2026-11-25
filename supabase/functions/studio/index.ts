@@ -243,8 +243,12 @@ Deno.serve(async (req) => {
         await admin.from("activity").insert({ actor: email, reel_id: reel.id, action: "youtube: title/description updated", detail: { code: reel.code } });
         return json({ ok: true });
       }
-      case "refresh_stats": {       // views / likes / comments for every posted reel + follower counts (also runs daily on the timer)
-        return json({ ok: true, ...(await refreshStats()) });
+      case "refresh_stats": {       // "Refresh now": everything, at most once per 10 minutes (the timer refreshes hourly anyway)
+        const { data: ch } = await admin.from("channels").select("stats_refreshed_at").eq("platform", "youtube").maybeSingle();
+        const ago = ch?.stats_refreshed_at ? Date.now() - new Date(ch.stats_refreshed_at).getTime() : Infinity;
+        if (ago < 10 * 60e3) return json({ ok: true, cooldown: Math.ceil((10 * 60e3 - ago) / 60e3), note: "Refreshed less than 10 minutes ago" });
+        await admin.from("channels").update({ stats_refreshed_at: new Date().toISOString() }).eq("platform", "youtube");
+        return json({ ok: true, ...(await refreshStats(false)) });
       }
       case "health": {              // connection / token / failed-post checks for the banner (also runs daily)
         return json({ ok: true, ...(await healthCheck()) });

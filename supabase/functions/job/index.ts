@@ -19,7 +19,9 @@ Deno.serve(async (req) => {
     if (new URL(req.url).searchParams.has("cron")) {
       const secret = Deno.env.get("CRON_SECRET");
       if (!secret || req.headers.get("x-cron-secret") !== secret) return json({ error: "not allowed" }, 403);
-      if (new URL(req.url).searchParams.get("cron") === "daily") return json({ ok: true, stats: await refreshStats(), health: await healthCheck() });
+      const which = new URL(req.url).searchParams.get("cron");
+      if (which === "daily") return json({ ok: true, health: await healthCheck() });
+      if (which === "stats") return json({ ok: true, stats: await refreshStats(true) });     // hourly: only the posts whose turn it is
       return json({ ok: true, started: await runDue() });
     }
     if (req.method === "GET") {
