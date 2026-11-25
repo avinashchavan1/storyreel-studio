@@ -79,3 +79,5 @@ Each rule has a mechanism in the engine; keep both.
     starts due posts with the app closed. A daily timer refreshes **Stats** (views, followers, weekly report) and the **health banner**.
     The owner ticks every claim on the Citations tab before the review box unlocks; the owner's **request queue** (`python3 scripts/queue.py`) comes
     before the plan order; every new script carries 3 scored `hook_options` (`python3 scripts/hook_options.py <ID>`) and the owner's pick wins.
+32. **One or two reels at a time (owner's rule).** Render (and record) at most 1–2 reels at once, in small batches, each uploaded as soon as it finishes
+    (rule 30), so the machine never overloads and the owner sees reels completing one by one in Live studio. Never start a long chain of many renders in parallel.
