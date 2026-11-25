@@ -87,8 +87,22 @@ def batch_progress(info, reel=None, step=None, task=None, pct=None):
             elif o.get("step"): tot += (o["step"] - 1 + (o.get("pct") or 0) / 100) / len(STEPS)
         info["batch_pct"] = round(100 * tot / len(reels), 1)
 
+def adopt_reel(info, reel):
+    """The reel being worked on always shows in the batch grid: a finished batch is replaced by a new one for this reel,
+    an unfinished batch gets the reel added at the end (otherwise the panel kept showing an old, finished batch)."""
+    if not reel or reel in (info.get("reels") or {}): return
+    reels = info.get("reels") or {}
+    if not reels or all(o.get("state") == "done" for o in reels.values()):
+        info["batch"] = {"title": f"{reel}", "codes": [reel], "started": now()}; info["reels"] = {}
+        try: info["batch"]["title"] = f"{reel} · {title_of(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'studio'), reel)}"
+        except Exception: pass
+    else:
+        info.setdefault("batch", {}).setdefault("codes", []).append(reel)
+    info["reels"][reel] = {"step": 0, "task": "Queued", "state": "queued"}
+
 def set_status(state="working", reel=None, step=None, task=None, detail=None, pct=None, eta=None, started=None, info=None, log=True):
     info = info if info is not None else load_info()
+    if state == "working": adopt_reel(info, reel)
     advance_stage(reel, step, info)
     task = task or (STEPS[step - 1] if step else None)
     batch_progress(info, reel, step, task, pct)
