@@ -77,7 +77,7 @@ Each rule has a mechanism in the engine; keep both.
 31. **Posting runs from the app, on a timer.** Each reel page has **Post everywhere** (Instagram, YouTube, Facebook Page; now or at a time), the
     Timeline has **Auto-fill** (schedules every checked reel at the best times), and the server timer (`scripts/schedule_setup.py`, pg_cron every 5 min)
     starts due posts with the app closed. A daily timer refreshes **Stats** (views, followers, weekly report) and the **health banner**.
-    One tick ("I checked the citations") reviews the whole reel and marks every claim; per-claim ticks are optional. The owner's **request queue** (`python3 scripts/queue.py`) comes
+    One tick ("I checked the citations") reviews the whole reel and marks every claim; per-claim ticks are optional. The owner's **request queue** (`python3 scripts/request_queue.py`) comes
     before the plan order; every new script carries 3 scored `hook_options` (`python3 scripts/hook_options.py <ID>`) and the owner's pick wins.
 32. **One or two reels at a time (owner's rule).** Render (and record) at most 1–2 reels at once, in small batches, each uploaded as soon as it finishes
     (rule 30), so the machine never overloads and the owner sees reels completing one by one in Live studio. Never start a long chain of many renders in parallel.
