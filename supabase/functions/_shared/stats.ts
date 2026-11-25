@@ -4,6 +4,14 @@ import { admin, facebookPage, FB_GRAPH, getIntegration, instagramToken, youtubeA
 const YT = "https://www.googleapis.com/youtube/v3";
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Quiet hours: no automatic stats refresh between 00:00 and 08:00 IST (owner's choice; nobody is watching, and it saves API calls).
+ *  Scheduled posts are NOT affected (separate timer). The function secret STATS_QUIET="0-8" (IST hours) can change it. */
+export function inQuietHours(now = new Date()) {
+  const [a, b] = (Deno.env.get("STATS_QUIET") ?? "0-8").split("-").map(Number);
+  const h = (now.getUTCHours() + now.getUTCMinutes() / 60 + 5.5) % 24;
+  return a <= b ? h >= a && h < b : h >= a || h < b;
+}
+
 /** How often a post is re-read (keeps API use small and far from Meta's and YouTube's limits, which posting shares):
  *  first 48 h after posting: hourly · up to 7 days: every 6 h · older: daily. */
 export function isDue(postedAt: string | null, statsAt: string | null, now = Date.now()) {

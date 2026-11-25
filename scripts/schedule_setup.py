@@ -2,7 +2,7 @@
 """Turn on the server timers (run once per channel, after migrations 0013/0014 and the job function are deployed):
   - every 5 minutes: start scheduled posts that are due   (job function ?cron=1)
   - every hour at :23: refresh the stats that are due (new posts hourly, then every 6 h, then daily) + followers (job function ?cron=stats)
-  - every day at 01:17 UTC (6:47 am IST): health checks (job function ?cron=daily)
+  - every day at 02:47 UTC (8:17 am IST): health checks (job function ?cron=daily). Stats skip 00:00-08:00 IST (quiet hours).
 Creates a random CRON_SECRET, stores it as a Supabase function secret and inside the pg_cron jobs (never printed).
   python3 scripts/schedule_setup.py            uses the Supabase management API (PAT as a network secret, 'proxy-injected')"""
 import json, os, secrets, sys, urllib.request
@@ -24,7 +24,7 @@ sql = f"""create extension if not exists pg_cron; create extension if not exists
 select cron.unschedule(jobname) from cron.job where jobname in ('{sid}-scheduler', '{sid}-daily', '{sid}-stats');
 select cron.schedule('{sid}-scheduler', '*/5 * * * *', $${job('1')}$$);
 select cron.schedule('{sid}-stats', '23 * * * *', $${job('stats')}$$);
-select cron.schedule('{sid}-daily', '17 1 * * *', $${job('daily')}$$);
+select cron.schedule('{sid}-daily', '47 2 * * *', $${job('daily')}$$);
 select jobname, schedule from cron.job where jobname like '{sid}-%';"""
 print(call("database/query", {"query": sql}))
-print("timers on: posts every 5 min, stats hourly (only what is due), health daily at 01:17 UTC")
+print("timers on: posts every 5 min, stats hourly (only what is due), health daily at 02:47 UTC (8:17 IST), no stats 00:00-08:00 IST")
