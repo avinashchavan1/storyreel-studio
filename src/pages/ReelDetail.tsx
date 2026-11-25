@@ -153,11 +153,14 @@ function PublishTab({ r, files }: { r: Reel; files: FileRow[] }) {
   return (
     <div className="grid gap-4">
       <label className={clsx("flex items-start gap-3 rounded-2xl border p-4", r.reviewed ? "border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40" : "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40")}>
-        <input id="reviewed" type="checkbox" className="mt-1 h-5 w-5 accent-gold-deep" checked={r.reviewed} disabled={!r.reviewed && cp.total > 0 && !cp.all}
-          onChange={(e) => update.mutate({ reel: r, patch: { reviewed: e.target.checked, reviewed_at: e.target.checked ? new Date().toISOString() : null, stage: e.target.checked && r.stage === "review" ? "approved" : r.stage }, action: e.target.checked ? "citations reviewed" : "review cleared" })} />
+        <input id="reviewed" type="checkbox" className="mt-1 h-5 w-5 accent-gold-deep" checked={r.reviewed}
+          onChange={(e) => { const on = e.target.checked, now = new Date().toISOString();
+            // one tick = every claim checked (the per-claim ticks on the Citations tab are optional)
+            const checks = on ? Object.fromEntries(cp.list.map((c) => [c.claim, cp.checks[c.claim] ?? now])) : cp.checks;
+            update.mutate({ reel: r, patch: { reviewed: on, reviewed_at: on ? now : null, claim_checks: checks, stage: on && r.stage === "review" ? "approved" : r.stage }, action: on ? "citations reviewed" : "review cleared" }); }} />
         <span className="text-sm">
           <b className="flex items-center gap-1.5"><ShieldCheck size={16} /> I checked the citations against {W.text}</b>
-          {r.reviewed ? <span className="text-emerald-800 dark:text-emerald-300">Reviewed {fmtDate(r.reviewed_at)}. Posting is unlocked.</span> : <span>Open the Citations tab and tick each claim {W.against} ({cp.done} of {cp.total} done); then tick this. Posting stays locked until then.</span>}
+          {r.reviewed ? <span className="text-emerald-800 dark:text-emerald-300">Reviewed {fmtDate(r.reviewed_at)}. Posting is unlocked.</span> : <span>Read the claims and their sources on the Citations tab ({cp.total} claim{cp.total === 1 ? "" : "s"}), then tick this once. It marks them all checked and unlocks posting.</span>}
         </span>
       </label>
       {!canAuto.youtube && !canAuto.instagram && !conn.isLoading && (
