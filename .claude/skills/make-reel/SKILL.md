@@ -10,7 +10,7 @@ S = `series/<series id>` (channel.json → series.id); R = `S/reels/<ID>`. Keep 
 `python3 scripts/status.py set --reel <ID> --step N` (1 research … 8 cover/upload); it also moves the reel's stage in the app, never backwards).
 
 ## 1. Research (step 1)
-- Topic = first reel in the owner's request queue (`python3 scripts/queue.py`, from the repo root; read any note), else the next `idea` row of the series plan (★★★ first), unless the owner names one; check `S/research/` notes.
+- Topic = first reel in the owner's request queue (`python3 scripts/request_queue.py`, from the repo root; read any note), else the next `idea` row of the series plan (★★★ first), unless the owner names one; check `S/research/` notes.
 - Read the base text itself: `python3 scripts/source_verse.py <book> <chapter> <verses>` (URL pattern in channel.json → source.verse_url).
   Read the whole episode, not just the verse you expect. Grep the translations for the key words. Save original text + translation of every verse you cite.
 - The popular version: find its real source text and copy its exact words (never from memory).

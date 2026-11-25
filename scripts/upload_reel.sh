@@ -17,8 +17,11 @@ PY
   python3 scripts/status.py auto $r 8 "Uploading the preview to the app" >/dev/null 2>&1 || true
   for k in preview:${r}_final.mp4 thumbnail:${r}_cover.jpg citations:${r}_citations.md caption:${r}_caption.txt; do python3 scripts/media.py $r ${k%%:*} $O/${k##*:} | tail -1; done
   python3 scripts/status.py auto $r 8 "Uploading the masters (Hugging Face)" >/dev/null 2>&1 || true
-  python3 scripts/masters.py $r 2>&1 | grep -E "attached|rror" | tail -2
-  python3 scripts/audiopack.py push $r 2>&1 | tail -1
+  # masters + audio pack must confirm success, or the whole upload fails loudly (a silent failure once left old masters in place)
+  M=$(python3 scripts/masters.py $r 2>&1); echo "$M" | grep -E "attached|rror" | tail -2
+  echo "$M" | grep -q "attached" || { echo "MASTERS NOT UPLOADED for $r"; echo "$M" | tail -5; exit 1; }
+  A=$(python3 scripts/audiopack.py push $r 2>&1); echo "$A" | tail -1
+  echo "$A" | grep -q "pushed" || { echo "AUDIO PACK NOT PUSHED for $r"; echo "$A" | tail -5; exit 1; }
   python3 scripts/status.py done $r >/dev/null 2>&1 || true
   echo "$r uploaded"
 done

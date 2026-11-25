@@ -73,7 +73,7 @@ export default function Plan() {
 }
 
 // #4 Reel request queue: "Make this" puts an idea in Claude's queue; Claude makes requests top-down
-// (scripts/queue.py prints the queue at the start of a session).
+// (scripts/request_queue.py prints the queue at the start of a session).
 const queueOf = (reels: Reel[]) => reels.filter((r) => r.requested_at && r.stage === "idea").sort((a, b) => (a.request_pos ?? 0) - (b.request_pos ?? 0));
 function MakeThis({ r, reels }: { r: Reel; reels: Reel[] }) {
   const update = useUpdateReel();
