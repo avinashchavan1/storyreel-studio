@@ -2,7 +2,7 @@
 //   GET  ?job_id=…   → everything the runner needs (captions, master URL, short-lived platform tokens)
 //   POST {job_id, status?, step?, log?, result_url?, external_id?} → progress / result
 import { runDue } from "../_shared/publish.ts";
-import { healthCheck, refreshStats } from "../_shared/stats.ts";
+import { healthCheck, inQuietHours, refreshStats } from "../_shared/stats.ts";
 import { admin, cors, facebookPage, FB_GRAPH, getIntegration, instagramToken, json, sha256, youtubeAccessToken } from "../_shared/util.ts";
 
 async function loadJob(req: Request, jobId: string) {
@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       if (!secret || req.headers.get("x-cron-secret") !== secret) return json({ error: "not allowed" }, 403);
       const which = new URL(req.url).searchParams.get("cron");
       if (which === "daily") return json({ ok: true, health: await healthCheck() });
-      if (which === "stats") return json({ ok: true, stats: await refreshStats(true) });     // hourly: only the posts whose turn it is
+      if (which === "stats") return json(inQuietHours() ? { ok: true, skipped: "quiet hours (00:00-08:00 IST)" } : { ok: true, stats: await refreshStats(true) });   // hourly: only the posts whose turn it is
       return json({ ok: true, started: await runDue() });
     }
     if (req.method === "GET") {

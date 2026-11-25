@@ -23,7 +23,9 @@ export const ago = (iso: string | null | undefined, now = Date.now()) => {
   const s = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
   return s < 60 ? "just now" : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min ago` : `${Math.round(s / 86400)} days ago`;
 };
-const nextTimer = (now = new Date()) => { const t = new Date(now); t.setUTCMinutes(23, 0, 0); if (t <= now) t.setUTCHours(t.getUTCHours() + 1); return t; };
+const istHour = (d: Date) => (d.getUTCHours() + d.getUTCMinutes() / 60 + 5.5) % 24;
+// the hourly timer runs at :23 UTC (:53 IST) and skips the quiet hours 00:00–08:00 IST
+const nextTimer = (now = new Date()) => { const t = new Date(now); t.setUTCMinutes(23, 0, 0); if (t <= now) t.setUTCHours(t.getUTCHours() + 1); while (istHour(t) < 8) t.setUTCHours(t.getUTCHours() + 1); return t; };
 const useNow = (ms = 30e3) => { const [t, setT] = useState(Date.now()); useEffect(() => { const i = setInterval(() => setT(Date.now()), ms); return () => clearInterval(i); }, [ms]); return t; };
 const RANGES = [{ key: "7", label: "Last 7 days", days: 7 }, { key: "30", label: "Last 30 days", days: 30 }, { key: "all", label: "All time", days: 1e5 }] as const;
 
@@ -93,7 +95,7 @@ export default function Stats() {
         </>
       )}
       <Card className="!p-4 text-xs text-ink-soft dark:text-parchment/60">
-        <b className="text-ink dark:text-parchment">How fresh are these numbers?</b> Each post is re-read every hour for its first 2 days, every 6 hours up to a week, then once a day.
+        <b className="text-ink dark:text-parchment">How fresh are these numbers?</b> Each post is re-read every hour for its first 2 days, every 6 hours up to a week, then once a day, except 12 am to 8 am IST (quiet hours; Refresh now still works any time).
         That keeps us far below Instagram's, Facebook's and YouTube's rate limits, which your posting shares, so a busy stats check can never block a scheduled post.
         Views: YouTube views, Instagram plays (needs the <code>instagram_manage_insights</code> permission), Facebook Reels plays.
       </Card>
