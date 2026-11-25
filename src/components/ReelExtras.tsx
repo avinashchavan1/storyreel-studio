@@ -70,7 +70,8 @@ export function FactCheck({ r }: { r: Reel }) {
       <div className="flex flex-wrap items-center gap-3 rounded-xl bg-black/[.04] p-3 text-sm dark:bg-white/5">
         <b className="tabular">{done} of {total} claims checked</b>
         <span className="relative h-2 min-w-[120px] flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10"><span className="absolute inset-y-0 left-0 rounded-full bg-emerald-600" style={{ width: `${(done / total) * 100}%` }} /></span>
-        <span className="text-xs text-ink-soft dark:text-parchment/60">Open each source, find the fact, tick it. All ticked → the citation box on Publish unlocks.</span>
+        <span className="text-xs text-ink-soft dark:text-parchment/60">Ticking each one is optional: one tick on Publish ("I checked the citations") marks them all.</span>
+        {done < total && <Button size="sm" onClick={() => update.mutate({ reel: r, patch: { claim_checks: Object.fromEntries(list.map((c) => [c.claim, checks[c.claim] ?? new Date().toISOString()])) } as Partial<Reel> })}>Mark all checked</Button>}
       </div>
       {list.map((c, i) => {
         const ok = !!checks[c.claim];
