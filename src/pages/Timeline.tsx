@@ -2,11 +2,14 @@ import clsx from "clsx";
 import { CalendarClock, CheckCircle2, Clapperboard, Clock, Flame, Hammer, Lightbulb } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ErrorNote, Spinner, StageBadge, fmtLen } from "../components/ui";
-import { useAllFiles, useMediaUrl, usePublications, useReels } from "../lib/api";
+import { Button, ErrorNote, Spinner, StageBadge, fmtLen } from "../components/ui";
+import { useQueryClient } from "@tanstack/react-query";
+import { studio, useAllFiles, useConnections, useMediaUrl, usePublications, useReels } from "../lib/api";
 import { KIND_LABEL, type FileRow, type Publication, type Reel } from "../lib/types";
 import { doubleCandidate, weeklyOn, MAJOR, MIN_BACKLOG, occasionsOn, upcoming } from "../lib/occasions";
-import { bestHour, confidence, dayName, fmtHour, istParts, observations, planDays, type Main, type Obs } from "../lib/bestTime";
+import { bestHour, confidence, dayName, fmtHour, istDate, istParts, observations, planDays, type Main, type Obs } from "../lib/bestTime";
+import calendarCfg from "../../calendar.json";
+const SHOW_FEST = (calendarCfg as { festival_plan?: boolean }).festival_plan !== false;   // calendar.json → festival_plan: false hides the Festival plan
 
 // All dates are India time. Posting days and times are suggestions from lib/bestTime.ts.
 const TZ = "Asia/Kolkata";
@@ -58,7 +61,7 @@ export default function Timeline() {
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <div>
         <h1 className="font-display text-3xl font-extrabold tracking-wide">Timeline</h1>
-        <p className="mt-1 text-sm text-ink-soft dark:text-parchment/60">Where the series stands today and what comes next, in posting order. Dates and times are India time, one reel a day, at the suggested best time for each platform.</p>
+        <p className="mt-1 text-sm text-ink-soft dark:text-parchment/60">Where the series stands today and what comes next, in posting order. Dates and times are India time, one reel per posting day (calendar.json → post_days), at the suggested best time for each platform.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -83,10 +86,11 @@ export default function Timeline() {
           <span className="rounded-full bg-gold px-3 py-1 text-xs font-extrabold uppercase tracking-widest text-night-950 shadow">Today · {dayLabel(now)}</span>
           <span className="h-px flex-1 bg-gold/60" />
         </li>
-        {(todayTags.length > 0) && <li className="-mt-2 mb-3 flex flex-wrap gap-1.5">{todayTags.map((t) => <span key={t} className="flex items-center gap-1 rounded-full bg-vermilion/10 px-2.5 py-0.5 text-xs font-semibold text-vermilion"><Flame size={12} />{t}</span>)}</li>}
+        {SHOW_FEST && (todayTags.length > 0) && <li className="-mt-2 mb-3 flex flex-wrap gap-1.5">{todayTags.map((t) => <span key={t} className="flex items-center gap-1 rounded-full bg-vermilion/10 px-2.5 py-0.5 text-xs font-semibold text-vermilion"><Flame size={12} />{t}</span>)}</li>}
 
         <Phase icon={<CalendarClock size={16} />} tone="amber" title="Ready to post" note="Watch it, check the citations, then post from the reel page" />
         {ready.length === 0 && <Empty>Nothing waiting. The next reel is in production.</Empty>}
+        {ready.length > 0 && <AutoFill plan={plan} byReel={byReel} todayN={todayN} />}
         {ready.length > 0 && <BestTimeCard obs={obs} />}
         {plan.map((s) => <Item key={s.reel.id} r={s.reel} cover={covers[s.reel.id]} when={`Post ${dayName(s.day)}`} pubs={byReel[s.reel.id]} dot="amber" hint={!s.reel.reviewed ? "Waiting for your check" : undefined}
           best={<><BestTimes ig={s.ig} yt={s.yt} why={s.why} />{s.dbl && <div className="mt-1.5 rounded-lg border border-dashed border-amber-400 px-2 py-1 text-[11px] text-amber-900 dark:text-amber-200"><b>Optional 2nd post, {fmtHour(s.dbl.am)}:</b> {s.dbl.reel.code} {s.dbl.reel.title} also fits {s.dbl.occasion.name}. Space it from the evening post; skip it if fewer than {MIN_BACKLOG} reels are ready.</div>}</>} />)}
@@ -95,6 +99,7 @@ export default function Timeline() {
         {making.length === 0 && <Empty>Starting the next one from the plan.</Empty>}
         {making.map((r) => <Item key={r.id} r={r} cover={covers[r.id]} when="Being made" dot="violet" />)}
 
+        {SHOW_FEST && <>
         <Phase icon={<Flame size={16} />} tone="amber" title="Festival plan" note="Occasions in the next 6 months and the reels that fit them (make them in time)" />
         {fest.map(({ o, day, reels: rs }) => {
           const daysTo = day - todayN, need = rs.filter((r) => r.stage === "idea" || PRODUCTION.includes(r.stage));
@@ -109,6 +114,7 @@ export default function Timeline() {
             </li>
           );
         })}
+        </>}
 
         <Phase icon={<Lightbulb size={16} />} tone="stone" title="Coming up" note="From the plan, strongest audience pull first" />
         {(allIdeas ? ideas : ideas.slice(0, 10)).map((r, i) => <Item key={r.id} r={r} when={i === 0 && making.length === 0 ? "Next" : `#${r.plan_no ?? "–"}`} dot="stone" compact />)}
@@ -214,6 +220,48 @@ function BestTimeCard({ obs }: { obs: Obs[] }) {
           </div>
         ))}
       </div>
+    </li>
+  );
+}
+
+// #5 Auto-fill: turn the suggested days into real schedules (the server's timer posts them)
+function AutoFill({ plan, byReel, todayN }: { plan: { reel: Reel; day: number; ig: number | null; yt: number | null }[]; byReel: Record<string, Publication[]>; todayN: number }) {
+  const conn = useConnections();
+  const qc = useQueryClient();
+  const [weeks, setWeeks] = useState(2);
+  const [st, setSt] = useState<{ busy?: boolean; msg?: string; errs?: string[] }>({});
+  const p = conn.data?.providers ?? {};
+  const on = { instagram: !!p.instagram?.connected, youtube: !!p.youtube?.connected, facebook: !!p.facebook?.connected };
+  const inRange = plan.filter((x) => x.day < todayN + weeks * 7);
+  const free = (r: Reel, k: string) => !(byReel[r.id] ?? []).some((q) => q.platform === k && ["posted", "posting", "scheduled"].includes(q.state));
+  const todo = inRange.filter((x) => x.reel.reviewed && (["instagram", "youtube", "facebook"] as const).some((k) => on[k] && free(x.reel, k)));
+  const waiting = inRange.filter((x) => !x.reel.reviewed);
+  const run = async () => {
+    setSt({ busy: true }); const errs: string[] = []; let n = 0;
+    for (const x of todo) {
+      const jobs: [string[], number | null][] = [[["instagram", "facebook"].filter((k) => on[k as keyof typeof on] && free(x.reel, k)), x.ig], [on.youtube && free(x.reel, "youtube") ? ["youtube"] : [], x.yt ?? x.ig]];
+      for (const [platforms, h] of jobs) {
+        if (!platforms.length || h === null) continue;
+        try {
+          const r = await studio<{ results: Record<string, { ok: boolean; error?: string }> }>("schedule", { reel_id: x.reel.id, platforms, at: istDate(x.day, h).toISOString(), options: { privacy: "public" } });
+          for (const [k, v] of Object.entries(r.results)) v.ok ? n++ : errs.push(`${x.reel.code} ${k}: ${v.error}`);
+        } catch (e) { errs.push(`${x.reel.code}: ${(e as Error).message}`); }
+      }
+    }
+    setSt({ msg: n ? `Scheduled ${n} post${n > 1 ? "s" : ""}. The server posts them on time, even with the app closed.` : "Nothing new to schedule.", errs });
+    qc.invalidateQueries({ queryKey: ["pubs"] });
+  };
+  return (
+    <li className="mb-3 grid gap-2 rounded-2xl border border-gold-deep/50 bg-gold-soft/40 p-4 text-sm dark:border-gold/30 dark:bg-gold/5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <b className="flex items-center gap-2"><CalendarClock size={16} /> Auto-fill the calendar</b>
+        <label className="flex items-center gap-2 text-xs font-semibold">Next
+          <select id="autofill-weeks" value={weeks} onChange={(e) => setWeeks(+e.target.value)} className="rounded-md border border-parchment-deep bg-white/80 px-2 py-1 dark:border-night-700 dark:bg-night-950"><option value={1}>1 week</option><option value={2}>2 weeks</option><option value={4}>4 weeks</option></select></label>
+      </div>
+      <p>Schedules every <b>checked</b> reel below on its suggested day: Instagram{on.facebook ? " + Facebook" : ""} at the best Instagram time, YouTube at the best YouTube time. {todo.length} reel{todo.length === 1 ? "" : "s"} ready to schedule{waiting.length ? `; ${waiting.length} waiting for your citation check (${waiting.slice(0, 5).map((x) => x.reel.code).join(", ")})` : ""}.</p>
+      <div><Button variant="primary" size="sm" disabled={!todo.length || st.busy} onClick={run}><CalendarClock size={14} /> {st.busy ? "Scheduling…" : `Schedule ${todo.length} reel${todo.length === 1 ? "" : "s"}`}</Button></div>
+      {st.msg && <p className="text-emerald-700 dark:text-emerald-300">{st.msg}</p>}
+      {st.errs?.map((e) => <p key={e} className="text-vermilion">{e}</p>)}
     </li>
   );
 }

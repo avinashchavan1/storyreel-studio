@@ -1,7 +1,9 @@
 // Job API for the GitHub Actions publisher. Auth: header x-job-token (one-time, expires in 3 h).
 //   GET  ?job_id=…   → everything the runner needs (captions, master URL, short-lived platform tokens)
 //   POST {job_id, status?, step?, log?, result_url?, external_id?} → progress / result
-import { admin, cors, getIntegration, instagramToken, json, sha256, youtubeAccessToken } from "../_shared/util.ts";
+import { runDue } from "../_shared/publish.ts";
+import { healthCheck, refreshStats } from "../_shared/stats.ts";
+import { admin, cors, facebookPage, FB_GRAPH, getIntegration, instagramToken, json, sha256, youtubeAccessToken } from "../_shared/util.ts";
 
 async function loadJob(req: Request, jobId: string) {
   const token = req.headers.get("x-job-token") ?? "";
@@ -13,6 +15,13 @@ async function loadJob(req: Request, jobId: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
+    // the timer (pg_cron, every 5 minutes): start every scheduled post that is due
+    if (new URL(req.url).searchParams.has("cron")) {
+      const secret = Deno.env.get("CRON_SECRET");
+      if (!secret || req.headers.get("x-cron-secret") !== secret) return json({ error: "not allowed" }, 403);
+      if (new URL(req.url).searchParams.get("cron") === "daily") return json({ ok: true, stats: await refreshStats(), health: await healthCheck() });
+      return json({ ok: true, started: await runDue() });
+    }
     if (req.method === "GET") {
       const jobId = new URL(req.url).searchParams.get("job_id") ?? "";
       const job = await loadJob(req, jobId);
@@ -29,6 +38,9 @@ Deno.serve(async (req) => {
       if (job.platform === "youtube") {
         out.youtube = { access_token: await youtubeAccessToken(), title: caps.youtube_title || `${reel!.title} #Shorts`, description: caps.youtube_description || caps.instagram || "",
           tags: (reel!.hashtags ?? []).map((t: string) => t.replace(/^#/, "")), playlist_id: (await getIntegration("youtube"))?.playlist_id ?? null };
+      } else if (job.platform === "facebook") {
+        const pg = await facebookPage();
+        out.facebook = { page_id: pg.page_id, page_name: pg.page_name, access_token: pg.token, api_base: FB_GRAPH, description: caps.facebook || caps.instagram || "" };
       } else {
         const ig = await instagramToken();
         out.instagram = { access_token: ig.token, user_id: ig.user_id, api_base: ig.api_base, caption: caps.instagram || "" };
