@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Button, Card, Empty, ErrorNote, SectionTitle, Spinner } from "../components/ui";
 import { studio, useFollowers, usePublications, useReels, useStatsDaily, useStatsLog, type FollowerDay, type StatDay, type StatLog } from "../lib/api";
 import type { Publication, Reel } from "../lib/types";
+import { BestTimePanel } from "../components/BestTimePanel";
 
 // Stats: what's working.
 // Refresh rhythm (kept small on purpose: Meta and YouTube rate-limit per account, and posting shares those limits):
@@ -83,6 +84,8 @@ export default function Stats() {
       <div className="grid gap-3 sm:grid-cols-3">
         {PLATS.map((p) => <PlatformTile key={p.key} label={p.label} now={now} pubs={posted.filter((x) => x.platform === p.key)} fol={(fol.data ?? []).filter((f) => f.platform === p.key)} />)}
       </div>
+
+      <BestTimePanel pubs={pubs.data ?? []} reels={reels.data ?? []} fol={fol.data ?? []} />
 
       {posted.length === 0 ? <Empty>No posts in this range yet. Numbers show up within the hour after a post (or press Refresh now).</Empty> : (
         <>
