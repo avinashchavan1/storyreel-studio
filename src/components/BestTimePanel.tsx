@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { CalendarClock, FlaskConical } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, SectionTitle } from "./ui";
 import { bestHour, confidence, DOW, explain, fmtHour, heat, istParts, observations, PLATFORMS, POST_DAYS, RESEARCH, testHour, dayName, type Main } from "../lib/bestTime";
 import type { FollowerDay } from "../lib/api";
@@ -69,6 +70,7 @@ export function BestTimePanel({ pubs, reels, fol }: { pubs: Publication[]; reels
               <li><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#E9C46A]" /><b>Research</b> {pctW(wR)}: {R.summary}</li>
               <li><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#C98A12]" /><b>Your audience</b> {pctW(wA)}: {p === "youtube" ? "YouTube doesn't share this through its API (YouTube Studio → Analytics → Audience shows it)." : e?.audienceDays ? `${e.audienceDays} days of Instagram 'followers online'${p === "facebook" ? " (used at half weight for Facebook)" : ""}.` : `not recorded yet${audErr ? ` (${audErr})` : ""}.`}</li>
               <li><span className="mr-1 inline-block h-2 w-2 rounded-full bg-[#7A4E00]" /><b>Your results</b> {pctW(wL)}: {e?.posts ? `${e.posts} ${LABEL[p]} post${e.posts > 1 ? "s" : ""} with stats; slots near this time did ${e.results.toFixed(2)}× the usual.` : "no posts with stats yet."}</li>
+              <li><span className="mr-1 inline-block h-2 w-2 rounded-full bg-ink dark:bg-parchment" /><b>Similar channels</b>: {e?.peers ? `${e.peerPosts} of their ${LABEL[p]} posts studied; this slot does ${e.peers.toFixed(2)}× their usual (weight ${Math.round((e.wP ?? 0) * 100)}%).` : "not studied yet."} <Link to="/best-time" className="font-semibold underline">Best time page</Link></li>
             </ul>
           </div>
         </div>

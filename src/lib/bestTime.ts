@@ -116,17 +116,30 @@ function learned(obs: Obs[], p: Main, dow: number, h: number) {
   return Math.max(0.3, Math.min(3, Math.pow(e.local, dataShare(e.n) * near)));
 }
 
+// --- 4. similar channels (server: supabase/functions/_shared/timing.ts → timing_model) ----------------------
+// Every morning the server studies similar channels' real posts (YouTube Data API, Instagram Business Discovery) and stores a
+// weekday × hour grid per platform (mean 1) with its weight (grows with the number of posts studied). Loaded once by the app shell.
+type PeerLayer = { grid: number[][]; w: number; posts: number; channels: number };
+let PEERS: Partial<Record<Main, PeerLayer>> = {};
+export function setPeerLayer(models: { platform: string; grid: number[][]; parts: { peers?: { weight?: number; posts?: number; channels?: number } } }[]) {
+  PEERS = Object.fromEntries(models.filter((m) => m.parts?.peers?.posts).map((m) => [m.platform, { grid: m.grid, w: m.parts.peers!.weight ?? 0, posts: m.parts.peers!.posts ?? 0, channels: m.parts.peers!.channels ?? 0 }]));
+}
+const peerAt = (p: Main, dow: number, h: number) => { const L = PEERS[p]; if (!L) return 1; const a = Math.floor(h) % 24, b = (a + 1) % 24, f = h - Math.floor(h); return Math.max(0.05, L.grid[dow][a] * (1 - f) + L.grid[dow][b] * f); };
+export const peerInfo = (p: Main) => PEERS[p] ?? null;
+
 // --- the decision ------------------------------------------------------------
 // as our own posts come in, the research+audience curve flattens (power 1 − 0.8·share) so our results can overrule it
 export function score(p: Main, day: number, h: number, obs: ObsSet) {
   const dow = (day + 4) % 7, a = obs.aud, wA = audienceWeight(p, a), g = dataShare(obs.filter((o) => o.platform === p).length);
   const base = wA > 0 ? Math.pow(prior(p, dow, h), 1 - wA) * Math.pow(audAt(a!, dow, h), wA) : prior(p, dow, h);
-  return Math.pow(base, 1 - 0.8 * g) * learned(obs, p, dow, h);
+  const wP = (PEERS[p]?.w ?? 0) * (1 - 0.6 * g);      // similar channels count less as our own results grow
+  return Math.pow(base, 1 - 0.8 * g) * Math.pow(peerAt(p, dow, h), wP) * learned(obs, p, dow, h);
 }
 // why a slot scored what it did: the three layers and how much each counted
 export function explain(p: Main, day: number, h: number, obs: ObsSet) {
   const dow = (day + 4) % 7, a = obs.aud, wA = audienceWeight(p, a), e = evidence(obs, p, dow, h), wL = e.n ? 0.8 * dataShare(e.n) : 0;
-  return { research: prior(p, dow, h), audience: wA > 0 ? audAt(a!, dow, h) : null, results: learned(obs, p, dow, h), wA, wL, posts: e.n, audienceDays: a?.days ?? 0 };
+  const g = dataShare(obs.filter((o) => o.platform === p).length), wP = (PEERS[p]?.w ?? 0) * (1 - 0.6 * g);
+  return { research: prior(p, dow, h), audience: wA > 0 ? audAt(a!, dow, h) : null, results: learned(obs, p, dow, h), peers: wP > 0 ? peerAt(p, dow, h) : null, wP, peerPosts: PEERS[p]?.posts ?? 0, wA, wL, posts: e.n, audienceDays: a?.days ?? 0 };
 }
 
 // best half-hour on a given IST day (skips times already past, and anything under an hour from now); from/to limit the window
