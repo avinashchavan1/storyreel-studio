@@ -90,6 +90,24 @@ export async function refreshStats(onlyDue = false) {
   return { checked: pubs.length, of: (all ?? []).length, updated: out, followers };
 }
 
+/** When our Instagram followers are online, by hour (layer 2 of the app's best-time system, src/lib/bestTime.ts).
+ *  Instagram answers for roughly the last 30 days, one 24-hour map per day (hours in Pacific time; the app converts to IST),
+ *  and only for accounts with 100+ followers. Asked once a day (the first follower refresh of the IST day); saved as
+ *  follower_daily.extra.online = { "YYYY-MM-DD": { "0": n, …, "23": n } }. Any error is saved as online_error, never thrown. */
+async function onlineFollowers(t: { token: string; api_base: string; user_id: string }) {
+  const { data: row } = await admin.from("follower_daily").select("extra").eq("platform", "instagram").eq("day", today()).maybeSingle();
+  const prev = (row?.extra ?? {}) as Record<string, unknown>;
+  if (prev.online || prev.online_error) return { online: prev.online, online_error: prev.online_error };
+  try {
+    const until = Math.floor(Date.now() / 1000), since = until - 29 * 86400;
+    const r = await (await fetch(`${t.api_base}/${t.user_id}/insights?metric=online_followers&period=lifetime&since=${since}&until=${until}&access_token=${encodeURIComponent(t.token)}`)).json();
+    if (r.error) return { online_error: String(r.error.message ?? r.error).slice(0, 200) };
+    const online: Record<string, Record<string, number>> = {};
+    for (const v of r.data?.[0]?.values ?? []) if (v.end_time && v.value && typeof v.value === "object" && Object.keys(v.value).length) online[String(v.end_time).slice(0, 10)] = v.value;
+    return Object.keys(online).length ? { online } : { online_error: "no data yet (Instagram shares this from 100 followers)" };
+  } catch (e) { return { online_error: (e instanceof Error ? e.message : String(e)).slice(0, 200) }; }
+}
+
 async function refreshFollowers() {
   const res: Record<string, number | string | null> = {};
   const save = async (platform: string, n: number | null, extra: Record<string, unknown> = {}) => {
@@ -107,7 +125,7 @@ async function refreshFollowers() {
     if (igI?.user_id) {
       const t = await instagramToken();
       const a = await (await fetch(`${t.api_base}/${t.user_id}?fields=followers_count,media_count&access_token=${encodeURIComponent(t.token)}`)).json();
-      await save("instagram", a.followers_count ?? null, { posts: a.media_count ?? null });
+      await save("instagram", a.followers_count ?? null, { posts: a.media_count ?? null, ...(await onlineFollowers(t)) });
     }
   } catch (e) { res.instagram = `error: ${e instanceof Error ? e.message : e}`; }
   try {

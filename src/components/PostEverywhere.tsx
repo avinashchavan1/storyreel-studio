@@ -3,8 +3,8 @@ import { CalendarClock, Send, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "./ui";
-import { studio } from "../lib/api";
-import { bestHour, istDate, istParts, POST_DAYS } from "../lib/bestTime";
+import { studio, useFollowers, usePublications, useReels } from "../lib/api";
+import { bestHour, istDate, istParts, observations, POST_DAYS, type Main, type ObsSet } from "../lib/bestTime";
 import type { FileRow, Publication, Reel } from "../lib/types";
 
 // One panel for all platforms: tick where it goes, then post now or pick a time.
@@ -16,12 +16,12 @@ const PL = [
 ] as const;
 type Key = (typeof PL)[number]["key"];
 
-// next posting day (calendar.json → post_days) at the audience's best evening slot, in IST
-export function nextBestSlot(now = new Date()) {
+// next posting day (calendar.json → post_days) at the best slot for that platform (lib/bestTime.ts: research + audience + our results), in IST
+export function nextBestSlot(now = new Date(), obs?: ObsSet, p: Main = "instagram") {
   const n = istParts(now);
   for (let d = n.day; d < n.day + 14; d++) {
     if (!POST_DAYS.includes((d + 4) % 7)) continue;
-    const h = bestHour("instagram", d, [], now, 7, 22.5);
+    const h = bestHour(p, d, obs ?? ([] as unknown as ObsSet), now, 7, 22.5);
     if (h !== null) return istDate(d, h);
   }
   return new Date(now.getTime() + 3600e3);
@@ -31,17 +31,19 @@ export const fmtIST = (iso: string) => new Date(iso).toLocaleString("en-IN", { t
 
 export function PostEverywhere({ r, pubs, files, auto }: { r: Reel; pubs: Publication[]; files: FileRow[]; auto: Record<string, boolean> }) {
   const qc = useQueryClient();
+  const allPubs = usePublications(), allReels = useReels(), fol = useFollowers();
+  const obs = useMemo(() => observations(allPubs.data ?? [], allReels.data ?? [], fol.data ?? []), [allPubs.data, allReels.data, fol.data]);
   const state = (k: Key) => pubs.find((p) => p.platform === k)?.state ?? "todo";
   const open = (k: Key) => !["posted", "posting", "scheduled"].includes(state(k));
   const ready = (k: Key) => auto[k] && files.some((f) => f.kind === PL.find((p) => p.key === k)!.master);
   const [pick, setPick] = useState<Record<Key, boolean>>(() => Object.fromEntries(PL.map((p) => [p.key, true])) as Record<Key, boolean>);
   const [mode, setMode] = useState<"now" | "later">("later");
-  const [when, setWhen] = useState(() => toLocalInput(nextBestSlot()));
+  const [when, setWhen] = useState(() => toLocalInput(nextBestSlot(new Date(), obs)));
   const [privacy, setPrivacy] = useState("public");
   const [st, setSt] = useState<{ busy?: boolean; msg?: string; errs?: string[] }>({});
   const chosen = PL.filter((p) => pick[p.key] && open(p.key) && ready(p.key)).map((p) => p.key);
   const scheduled = pubs.filter((p) => p.state === "scheduled" && p.scheduled_for);
-  const best = useMemo(() => nextBestSlot(), []);
+  const best = useMemo(() => nextBestSlot(new Date(), obs), [obs]);
 
   const go = async () => {
     setSt({ busy: true });
