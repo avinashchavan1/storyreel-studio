@@ -81,3 +81,7 @@ Each rule has a mechanism in the engine; keep both.
     before the plan order; every new script carries 3 scored `hook_options` (`python3 scripts/hook_options.py <ID>`) and the owner's pick wins.
 32. **One or two reels at a time (owner's rule).** Render (and record) at most 1–2 reels at once, in small batches, each uploaded as soon as it finishes
     (rule 30), so the machine never overloads and the owner sees reels completing one by one in Live studio. Never start a long chain of many renders in parallel.
+33. **Best time + Autopilot.** Every morning the server studies similar channels' real posts (YouTube Data API, Instagram Business Discovery;
+    no scraping; Instagram hashtag data needs Meta's Public Content Access review), our Instagram audience's online hours (100+ followers) and our
+    own results, and builds a weekday × hour score per platform (Best time page). Autopilot, off until the owner turns it on, schedules only
+    CHECKED reels into the best slot of each posting day. Similar channels: found once from `autopilot.peer_search`, editable on the page.

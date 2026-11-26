@@ -1,5 +1,6 @@
 // Admin actions from the app: connections, OAuth start, "Post now", and "Apply brand to YouTube".
 import { healthCheck, refreshStats } from "../_shared/stats.ts";
+import { addPeer, buildModel, discoverPeers, runAutopilot, scanPeers } from "../_shared/timing.ts";
 import { checkPublish, PLATFORMS, PublishError, startPublish } from "../_shared/publish.ts";
 import { admin, cors, facebookPage, FB_GRAPH, FN_URL, getIntegration, instagramToken, json, randomToken, REPO, requireAdmin, resolveInstagramFromToken, setIntegration, sha256, youtubeAccessToken } from "../_shared/util.ts";
 
@@ -249,6 +250,30 @@ Deno.serve(async (req) => {
         if (ago < 10 * 60e3) return json({ ok: true, cooldown: Math.ceil((10 * 60e3 - ago) / 60e3), note: "Refreshed less than 10 minutes ago" });
         await admin.from("channels").update({ stats_refreshed_at: new Date().toISOString() }).eq("platform", "youtube");
         return json({ ok: true, ...(await refreshStats(false)) });
+      }
+      case "timing_rescan": {        // Best time page → "Rescan now" (at most every 10 minutes: YouTube quota + Meta limits)
+        const { data: last } = await admin.from("timing_model").select("updated_at").order("updated_at", { ascending: false }).limit(1).maybeSingle();
+        if (last?.updated_at && Date.now() - new Date(last.updated_at).getTime() < 10 * 60e3 && !body.force_discover) return json({ ok: true, cooldown: true });
+        if (body.force_discover) await discoverPeers();
+        return json({ ok: true, scanned: await scanPeers(), model: await buildModel() });
+      }
+      case "peer_add": {
+        try { const name = await addPeer(body.platform, String(body.handle ?? "")); return json({ ok: true, name }); }
+        catch (e) { return json({ error: e instanceof Error ? e.message : String(e) }, 400); }
+      }
+      case "peer_toggle": {
+        await admin.from("peers").update({ active: !!body.active }).eq("id", body.id);
+        return json({ ok: true });
+      }
+      case "autopilot_set": {
+        const patch: Record<string, unknown> = { updated_by: email, updated_at: new Date().toISOString() };
+        for (const k of ["enabled", "platforms", "days_ahead", "post_days"]) if (k in body) patch[k] = body[k];
+        await admin.from("autopilot").update(patch).eq("id", 1);
+        await admin.from("activity").insert({ actor: email, action: `autopilot ${body.enabled === false ? "turned off" : body.enabled ? "turned on" : "settings changed"}`, detail: patch });
+        return json({ ok: true, ...(body.enabled ? { run: await runAutopilot() } : {}) });
+      }
+      case "autopilot_run": {
+        return json({ ok: true, ...(await runAutopilot()) });
       }
       case "health": {              // connection / token / failed-post checks for the banner (also runs daily)
         return json({ ok: true, ...(await healthCheck()) });

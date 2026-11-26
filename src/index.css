@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-@media (prefers-color-scheme: dark) { :root { color-scheme: dark; } }
+:root { color-scheme: light; --heat: 20 18 58; }   /* Best time heatmap: one hue, ink in light mode */
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark; --heat: 255 200 61; } }   /* gold in dark mode */
 html, body, #root { height: 100%; }
 body { font-family: theme(fontFamily.sans); -webkit-font-smoothing: antialiased; }
 .tabular { font-variant-numeric: tabular-nums; }

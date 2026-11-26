@@ -17,6 +17,7 @@ import SettingsPage from "./pages/Settings";
 import Timeline from "./pages/Timeline";
 import World from "./pages/World";
 import Stats from "./pages/Stats";
+import Timing from "./pages/Timing";
 import { WorkPage } from "./components/WorkBar";
 import { About, Privacy, Terms } from "./pages/Legal";
 import { CHANNEL } from "./lib/channel";
@@ -39,6 +40,7 @@ createRoot(document.getElementById("root")!).render(
               <Route index element={<Dashboard />} />
               <Route path="timeline" element={<Timeline />} />
               <Route path="stats" element={<Stats />} />
+              <Route path="best-time" element={<Timing />} />
               <Route path="reels" element={<Reels />} />
               <Route path="reels/:code" element={<ReelDetail />} />
               <Route path="plan" element={<Plan />} />
