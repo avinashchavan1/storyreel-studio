@@ -9,7 +9,7 @@ const CH = JSON.parse(readFileSync(resolve(__dirname, "channel.json"), "utf8"));
 const T = CH.brand?.app_theme ?? {};
 const ICON_SRC = T.icon && existsSync(resolve(__dirname, T.icon)) ? resolve(__dirname, T.icon) : null;
 const ICON_URL = ICON_SRC ? `/app-icon${extname(ICON_SRC)}` : "/favicon.svg";
-const ICON_TYPE = ({ ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp" } as Record<string, string>)[extname(ICON_SRC ?? ".svg")] ?? "image/png";
+const ICON_TYPE = ({ ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp" } as Record<string, string>)[extname(ICON_URL)] ?? "image/png";
 
 function channelBrand(): Plugin {
   return {
