@@ -8,8 +8,9 @@ export class PublishError extends Error { constructor(msg: string, public status
 /** Everything that must be true before a reel can go to `platform` (also used when scheduling, so problems show up early). */
 export async function checkPublish(reel_id: string, platform: string) {
   if (!(PLATFORMS as readonly string[]).includes(platform)) throw new PublishError(`Auto-posting is available for ${PLATFORMS.join(", ")}`);
-  const { data: reel } = await admin.from("reels").select("id,code,reviewed").eq("id", reel_id).single();
+  const { data: reel } = await admin.from("reels").select("id,code,reviewed,kind").eq("id", reel_id).single();
   if (!reel) throw new PublishError("reel not found", 404);
+  if (reel.kind === "longform" && platform !== "youtube") throw new PublishError("Full-length videos post to YouTube only");
   if (!reel.reviewed) throw new PublishError("Tick the citation check before posting");
   const kind = platform === "youtube" ? "master_youtube" : "master_instagram";
   const { data: master } = await admin.from("files").select("id").eq("reel_id", reel_id).eq("kind", kind).maybeSingle();

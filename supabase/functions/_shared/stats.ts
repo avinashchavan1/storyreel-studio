@@ -23,6 +23,23 @@ export function isDue(postedAt: string | null, statsAt: string | null, now = Dat
 /** Views / likes / comments (+ reach, saves, shares) for posted reels, and follower counts.
  *  onlyDue: just the posts whose turn it is (the hourly timer); otherwise all (Refresh now, max once per 10 min).
  *  Writes publications.stats (latest), stats_daily (one row per day) and stats_log (every reading). */
+// retention (YouTube Analytics; needs the yt-analytics.readonly scope: "Reconnect YouTube" once): average % viewed, average view time,
+// and the audience-retention curve (share of viewers still watching at each 1% of the video), for format tests like the opening-verse position
+async function ytRetention(tok: string, id: string, duration?: string): Promise<Record<string, unknown>> {
+  const out: Record<string, unknown> = {};
+  try {
+    const A = "https://youtubeanalytics.googleapis.com/v2/reports", end = new Date().toISOString().slice(0, 10), base = `ids=channel==MINE&startDate=2024-01-01&endDate=${end}&filters=video==${id}`;
+    const H = { headers: { Authorization: `Bearer ${tok}` } };
+    const sum = await (await fetch(`${A}?${base}&metrics=views,averageViewDuration,averageViewPercentage`, H)).json();
+    if (sum.error) { out.analytics_error = String(sum.error.message ?? sum.error).slice(0, 200); return out; }
+    const r0 = sum.rows?.[0]; if (r0) { out.avg_view_s = r0[1]; out.avg_view_pct = r0[2]; }
+    const cur = await (await fetch(`${A}?${base}&metrics=audienceWatchRatio,relativeRetentionPerformance&dimensions=elapsedVideoTimeRatio&sort=elapsedVideoTimeRatio`, H)).json();
+    if (cur.rows) out.retention = cur.rows.map((r: number[]) => [r[0], Math.round(r[1] * 1000) / 1000, Math.round(r[2] * 1000) / 1000]);
+    if (duration) out.duration = duration;
+  } catch (e) { out.analytics_error = e instanceof Error ? e.message : String(e); }
+  return out;
+}
+
 export async function refreshStats(onlyDue = false) {
   const { data: all } = await admin.from("publications").select("id,reel_id,platform,external_id,posted_at,stats_at").eq("state", "posted").not("external_id", "is", null);
   const pubs = (all ?? []).filter((p) => !onlyDue || isDue(p.posted_at, p.stats_at));
@@ -44,7 +61,7 @@ export async function refreshStats(onlyDue = false) {
         const items = (await (await fetch(`${YT}/videos?part=statistics,status,contentDetails&id=${chunk.map((p) => p.external_id).join(",")}`, { headers: { Authorization: `Bearer ${tok}` } })).json()).items ?? [];
         for (const p of chunk) {
           const it = items.find((x: any) => x.id === p.external_id) ?? {}; const v = it.statistics ?? {}, st = it.status ?? {};
-          await save(p, { views: +v.viewCount || 0, likes: +v.likeCount || 0, comments: +v.commentCount || 0,
+          await save(p, { views: +v.viewCount || 0, likes: +v.likeCount || 0, comments: +v.commentCount || 0, ...(await ytRetention(tok, p.external_id, it.contentDetails?.duration)),
             status: { privacy: st.privacyStatus, upload: st.uploadStatus, made_for_kids: st.madeForKids, self_declared_kids: st.selfDeclaredMadeForKids,
               age_restricted: it.contentDetails?.contentRating?.ytRating === "ytAgeRestricted", rejection: st.rejectionReason ?? null, license: st.license } });
         }

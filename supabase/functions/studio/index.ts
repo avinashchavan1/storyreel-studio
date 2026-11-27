@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
           const u = new URL("https://accounts.google.com/o/oauth2/v2/auth");
           u.search = new URLSearchParams({ client_id: app.client_id, redirect_uri: `${FN_URL}/oauth/youtube`, response_type: "code", access_type: "offline", prompt: "consent", include_granted_scopes: "true",
             // youtube = manage the channel (banner, description, watermark, playlists); youtube.upload = post videos
-            scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl", state }).toString();
+            scope: "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/yt-analytics.readonly", state }).toString();
           return json({ url: u.toString() });
         }
         if (body.provider === "instagram") {
