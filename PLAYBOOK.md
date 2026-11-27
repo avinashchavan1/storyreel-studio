@@ -97,3 +97,7 @@ Each rule has a mechanism in the engine; keep both.
     Write the plan the same way: each "turn" gives every category one reel before any repeats, and refill a category that runs out.
 36. **More real photos.** 2-4 openly licensed real photos per reel when good ones exist, each ~4 s with marks (rule 30's proof-shot style).
     When Wikimedia rate-limits (HTTP 429), search Openverse (api.openverse.org) and check each licence on the source page.
+37. **Motion holds retention.** The engine has three optional hooks a series can define: `FX_CAM(sh, u, i, t)` → `{ z, dx, dy, rot }` moves the
+    camera over the art (push-ins, punches on sentence starts, whip-ins), `FX_CUT(ctx, TL, i, u, t)` replaces the soft cut, and
+    `FX_UI(ctx, sh, u, t, i, TL)` draws on top (progress bar, transition wipes, beat sparkles). Put them in `series/<id>/art/` behind a per-reel switch,
+    so old reels render unchanged; aim for something moving or changing every 2-3 s.
