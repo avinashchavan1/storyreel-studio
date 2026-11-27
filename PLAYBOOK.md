@@ -92,3 +92,8 @@ Each rule has a mechanism in the engine; keep both.
 34. **Every link is in git.** `studio/series/<id>/MEDIA.md` (+ `media.json`) lists each reel's Hugging Face masters, audio pack, Storage paths
     (preview, cover, citations, caption) and live post links. `upload_reel.sh` rewrites it; after posts, `bootstrap.sh` runs `python3 scripts/media_index.py --commit`
     at the start of a session so the live links are committed too. Never hand-edit it.
+35. **Categories take turns fairly (opt-in: `calendar.json → "rotation": "fair"`).** Autopilot then boosts the CHECKED reel whose category
+    (the plan's Category column, `reels.source_ref`) has waited longest since its last post or scheduled post; theme days, festivals and the other rules still apply.
+    Write the plan the same way: each "turn" gives every category one reel before any repeats, and refill a category that runs out.
+36. **More real photos.** 2-4 openly licensed real photos per reel when good ones exist, each ~4 s with marks (rule 30's proof-shot style).
+    When Wikimedia rate-limits (HTTP 429), search Openverse (api.openverse.org) and check each licence on the source page.
