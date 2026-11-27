@@ -213,7 +213,7 @@ function BestTimeCard({ obs }: { obs: ObsSet }) {
         (when your Instagram followers are online{obs.aud?.days ? `, ${obs.aud.days} days recorded` : ", recorded daily once the account has 100+ followers"}) and <b>your results</b>
         (each post's speed vs the posts around it, by weekday and hour). The more you post, the more your own data counts; every few posts Auto-fill tries a
         <b> test slot</b> so it keeps learning. Full picture on the <Link to="/stats" className="underline">Stats</Link> page.
-        Reels with a weekly theme (calendar.json → weekly) go on their days.
+        Categories take turns fairly (plan order, and Autopilot gives each day to the category that has waited longest); a reel with a weekly theme (calendar.json → weekly) still goes on its day.
       </p>
       <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
         {rows.map(({ p, list, conf }) => (
