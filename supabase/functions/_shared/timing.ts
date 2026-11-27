@@ -275,7 +275,7 @@ export async function runAutopilot() {
     // ---- long-form (owner, Nov 27 2026): an approved full-length video goes to YouTube on Sunday at 11:00 IST (the channel's best
     //      YouTube slot in the model), at most one a week, never on top of another long-form video; it doesn't take the reel's evening slot ----
     if (platforms.includes("youtube") && day.getUTCDay() === 0) {
-      const lf = (reels ?? []).filter((r) => r.kind === "longform" && r.reviewed && r.stage !== "published" && !when(r, "youtube"));
+      const lf = (reels ?? []).filter((r) => r.kind === "longform" && r.reviewed && r.stage !== "published" && !when(r, "youtube") && (!r.post_on || r.post_on === key));   // a planned date (post_on, e.g. the 1st/3rd Sunday) is kept
       const weekHasLf = P_.some((x) => x.platform === "youtube" && live(x) && (reels ?? []).some((r) => r.kind === "longform" && r.id === x.reel_id) &&
         Math.abs(Date.parse(istKey((x.scheduled_for ?? x.posted_at) as string)) - Date.parse(key)) < 7 * 864e5);
       const at = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 11) - IST * 3600e3);
