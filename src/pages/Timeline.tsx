@@ -32,7 +32,7 @@ export default function Timeline() {
     return m;
   }, [pubs.data]);
 
-  if (reels.isLoading || pubs.isLoading) return <Spinner />;
+  if (reels.isLoading || pubs.isLoading) return <Spinner label="Loading the timeline…" />;
   if (reels.error) return <ErrorNote error={reels.error} />;
   const all = [...(reels.data ?? [])].sort((a, b) => (a.plan_no ?? 9999) - (b.plan_no ?? 9999));
   const posted = (r: Reel) => (byReel[r.id] ?? []).filter((p) => p.state === "posted" && p.posted_at);
