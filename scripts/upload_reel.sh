@@ -25,3 +25,5 @@ PY
   python3 scripts/status.py done $r >/dev/null 2>&1 || true
   echo "$r uploaded"
 done
+# keep the repo's media index (studio/series/<id>/MEDIA.md + media.json) pointing at the new masters, audio packs and posts
+python3 scripts/media_index.py || echo "media index not refreshed (run python3 scripts/media_index.py later)"

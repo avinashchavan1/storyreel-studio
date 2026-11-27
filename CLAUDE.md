@@ -35,7 +35,7 @@ If `channel.json` still says "example", run `bash scripts/setup.sh` first.
 - `src/`: the studio app (React + Vite + Tailwind; Supabase). Deploy: `bash scripts/deploy.sh` (Netlify).
 - `supabase/`: migrations + edge functions (studio, job, oauth); function secrets: APP_URL, GITHUB_REPO, HF_MASTERS_REPO, IG_HANDLE.
 - `scripts/`: sync.py (studio → app DB), media.py, masters.py (HF masters repo), audiopack.py, cast_media.py, status.py, publish_job.py,
-  source_verse.py, setup.sh (new channel), channel.py (loads channel.json).
+  source_verse.py, setup.sh (new channel), channel.py (loads channel.json), media_index.py (writes series/<id>/MEDIA.md + media.json: links to every master, audio pack and live post; run after uploads/posts).
 
 ## Full-length videos
 - Full-length videos (16:9, ~10–12 min) are NEW productions, never stitched from old reels; 4–6 reels are DERIVED from each
