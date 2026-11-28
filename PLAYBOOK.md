@@ -101,3 +101,12 @@ Each rule has a mechanism in the engine; keep both.
     camera over the art (push-ins, punches on sentence starts, whip-ins), `FX_CUT(ctx, TL, i, u, t)` replaces the soft cut, and
     `FX_UI(ctx, sh, u, t, i, TL)` draws on top (progress bar, transition wipes, beat sparkles). Put them in `series/<id>/art/` behind a per-reel switch,
     so old reels render unchanged; aim for something moving or changing every 2-3 s.
+
+38. **Narrator house style.** `series.json → narration_energy: "storytelling"` makes the narrator an energetic storyteller (cast.json
+    voice_settings ≈ stability 0.32, style 0.6, speed 1.18; tags [storytelling] [engaged] [intense] [confident] [serious] [curious] [warmly] [pause]).
+    `make_reel.py check` rejects [softly]/[thoughtfully] and "…" inside narrator lines in that style (they made the voice slow and moaning);
+    the picker's guard is the narrator's `f0_hz + f0_max_rise` (set it from an audition). Audition a new style on 3 lines before switching.
+39. **Preparing long-form videos.** Plan each as `longform/<code>/longform.json` (stage "idea": arc, candidate beats marked "verify in the
+    base text", derived reels, characters to ask about) so it shows on the Long-form page. Then research one video at a time: save every
+    chapter of the arc (`source_verse.py`), pin each beat to its verse (`python3 scripts/verse_find.py "<word>" "<saved pages>"`), note page gaps,
+    and write `longform/<code>/research/README.md`. An absence claim ("X is not in the text") needs every chapter of the episode complete on the page.
